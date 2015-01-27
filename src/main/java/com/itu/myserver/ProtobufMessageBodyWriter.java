@@ -1,4 +1,4 @@
-package com.itu.rest;
+package com.itu.myserver;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -14,7 +14,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyWriter;
 import javax.ws.rs.ext.Provider;
 
-import com.itu.rest.AddressBookProtos.Person;
+import com.itu.myserver.AddressBookProtos.Person;
 
 @Provider
 @Produces("application/x-protobuf")

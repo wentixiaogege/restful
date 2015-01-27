@@ -1,4 +1,4 @@
-package com.itu.rest;
+package com.itu.myserver;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -13,7 +13,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.ext.MessageBodyReader;
 import javax.ws.rs.ext.Provider;
 
-import com.itu.rest.AddressBookProtos.Person;
+import com.itu.myserver.AddressBookProtos.Person;
 
 
 @Provider

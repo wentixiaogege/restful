@@ -6,6 +6,7 @@ import java.net.URLConnection;
 
 import junit.framework.TestCase;
 
+import com.itu.myserver.AddressBookProtos;
 import com.itu.rest.ProtobufProviders.ProtobufMessageBodyReader;
 import com.itu.rest.ProtobufProviders.ProtobufMessageBodyWriter;
 import com.sun.jersey.api.client.Client;

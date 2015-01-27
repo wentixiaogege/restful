@@ -1,6 +1,6 @@
 package tutorial;
 
-option java_package = "com.itu.rest";
+option java_package = "com.itu.myserver";
 option java_outer_classname = "AddressBookProtos";
 
 message Person {
