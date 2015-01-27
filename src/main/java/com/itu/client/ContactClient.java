@@ -1,99 +1,84 @@
 package com.itu.client;
 
-import java.util.Arrays;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.List;
 
-import javax.ws.rs.core.MediaType;
-import javax.xml.bind.JAXBElement;
-
-import com.itu.bean.Address;
-import com.itu.bean.Contact;
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientResponse;
-import com.sun.jersey.api.client.GenericType;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.representation.Form;
-
+import com.itu.rest.AddressBookProtos.Person;
+import com.itu.rest.AddressBookProtos.Person.PhoneNumber;
 
 public class ContactClient {
 	
-	public static void main(String[] args) {
-		Client c = Client.create();
-		WebResource r = c.resource("http://localhost:8080/RESTfulItu/rest/contacts");
-		
-		System.out.println("===== Get huangyim =====");
-		getOneContact(r, "huangyim");
-		
-		System.out.println("===== Create foo =====");
-		postForm(r, "foo", "bar");
-		
-		Address[] addrs = {
-			new Address("Shanghai", "Ke Yuan Street")
-		};
-		Contact cnt = new Contact("guoqing", "Guo Qing", Arrays.asList(addrs));
-		
-		System.out.println("===== Create guoqing =====");
-		putOneContact(r, cnt);
-		
-		System.out.println("===== All Contacts =====");
-		getContacts(r);
-		
-		System.out.println("===== Delete foo =====");
-		deleteOneContact(r, "foo");
-		
-		System.out.println("===== All Contacts =====");
-		getContacts(r);
+	public static void main(String[] args) throws IOException {
+		String url1 = "http://localhost:8080/jerseydemo2/rest/addressbook/";
+		putContacts(url1, "");
+//		String url2 = "http://localhost:8080/jerseydemo2/rest/addressbook/jack";
+//		getContacts(url2);
 	}
-	
-	public static void getContacts(WebResource r) {
+	public static void putContacts(String url, String name) throws IOException {
+		File file = new File("D:/"+name+".per");
+		Person p = Person.parseFrom(new FileInputStream(file));
+		byte[] content = p.toByteArray();
 		
-		// 1, get response as plain text
-		String jsonRes = r.accept(MediaType.APPLICATION_JSON).get(String.class);
-		System.out.println(jsonRes);
+		URL target = new URL(url);
+		HttpURLConnection conn = (HttpURLConnection) target.openConnection();
+		conn.setDoOutput(true);
+		conn.setDoInput(true);
+		conn.setRequestMethod("PUT");
+		conn.setRequestProperty("Content-Type", "application/x-protobuf");
+		conn.setRequestProperty("Accept", "application/x-protobuf;q=0.5");
 		
-		String xmlRes = r.accept(MediaType.APPLICATION_XML).get(String.class);
-		System.out.println(xmlRes);
+		conn.setRequestProperty("Content-Length", Integer.toString(content.length));
+			// set stream mode to decrease memory usage
+		conn.setFixedLengthStreamingMode(content.length);
+		OutputStream out = conn.getOutputStream();
+		out.write(content);
+		out.flush();
+		out.close();
+		conn.connect();
+		// check response code
+		int code = conn.getResponseCode();
+		boolean success = (code >= 200) && (code < 300);
+		System.out.println("put person:"+name+" "+(success?"successful!":"failed!"));
+	}
+	public static void getContacts(String url) throws IOException {
+		URL target = new URL(url);
+		HttpURLConnection conn = (HttpURLConnection) target.openConnection();
+		conn.setDoOutput(true);
+		conn.setDoInput(true);
+		conn.setRequestMethod("GET");
+		conn.setRequestProperty("Content-Type", "application/x-protobuf");
+		conn.setRequestProperty("Accept", "application/x-protobuf");
+		conn.connect();
+		// check response code
+		int code = conn.getResponseCode();
+		boolean success = (code >= 200) && (code < 300);
+		//@SuppressWarnings("resource")
+		InputStream in = success ? conn.getInputStream() : conn.getErrorStream();
+				
+		int size = conn.getContentLength();
 		
-		// 2, get response and headers etc, wrapped in ClientResponse
-		ClientResponse response = r.get(ClientResponse.class);
-		System.out.println( response.getStatus() );
-		System.out.println( response.getHeaders().get("Content-Type") );
-		String entity = response.getEntity(String.class);
-		System.out.println(entity);
+		byte[] response = new byte[size];
+		int curr = 0, read = 0;
 		
-		// 3, get JAXB response
-		GenericType<List<Contact>> genericType = new GenericType<List<Contact>>() {};
-		List<Contact> contacts = r.accept(MediaType.APPLICATION_XML).get(genericType);
-		System.out.println("No. of Contacts: " + contacts.size());
-		Contact contact = contacts.get(0);
-		System.out.println(contact.getId() + ": " + contact.getName());
-	}
-	
-	public static void getOneContact(WebResource r, String id) {
-		GenericType<JAXBElement<Contact>> generic = new GenericType<JAXBElement<Contact>>() {};
-		JAXBElement<Contact> jaxbContact = r.path(id).accept(MediaType.APPLICATION_XML).get(generic);
-		Contact contact = jaxbContact.getValue();
-		System.out.println(contact.getId() + ": " + contact.getName());
-	}
-	
-	public static void postForm(WebResource r, String id, String name) {
-		Form form = new Form();
-		form.add("id", id);
-		form.add("name", name);
-		ClientResponse response = r.type(MediaType.APPLICATION_FORM_URLENCODED)
-								   .post(ClientResponse.class, form);
-		System.out.println(response.getEntity(String.class));
-	}
-	
-	public static void putOneContact(WebResource r, Contact c) {
-		ClientResponse response = r.path(c.getId()).accept(MediaType.APPLICATION_XML)
-								   .put(ClientResponse.class, c);
-		System.out.println(response.getStatus());
-	}
-	
-	public static void deleteOneContact(WebResource r, String id) {
-		ClientResponse response = r.path(id).delete(ClientResponse.class);
-		System.out.println(response.getStatus());
+		while (curr < size) {
+			read = in.read(response, curr, size - curr);
+			if (read <= 0) break;
+			curr += read;
+		}
+		
+		Person p = Person.parseFrom(response);
+		System.out.println("id:"+p.getId());
+		System.out.println("name:"+p.getName());
+		System.out.println("email:"+p.getEmail());
+		List<PhoneNumber> pl = p.getPhoneList();
+		for(PhoneNumber pn : pl) {
+			System.out.println("number:"+pn.getNumber()+" type:"+pn.getType().name());
+		}
 	}
 }
-
