@@ -1,4 +1,4 @@
-package com.itu.rest;
+package com.itu.myserver;
 
 import java.util.ArrayList;
 import java.util.List;

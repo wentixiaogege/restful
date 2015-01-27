@@ -1,4 +1,4 @@
-package com.itu.rest;
+package com.itu.myserver;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;

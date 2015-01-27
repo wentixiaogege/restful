@@ -1,4 +1,4 @@
-package com.itu.rest;
+package com.itu.myserver;
 
 import java.io.IOException;
 import java.net.URI;
